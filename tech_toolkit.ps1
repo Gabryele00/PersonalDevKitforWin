@@ -1,5 +1,5 @@
 # ============================================
-# TOOLKIT TECNICO POWERSHELL
+# TOOLKIT TECNICO POWERSHELL V2
 # Cassetta degli attrezzi polivalente
 # ============================================
 
@@ -14,7 +14,7 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 function Show-Menu {
     Clear-Host
     Write-Host "============================================" -ForegroundColor Cyan
-    Write-Host "        TOOLKIT TECNICO POWERSHELL        " -ForegroundColor Cyan
+    Write-Host "      TOOLKIT TECNICO POWERSHELL V2       " -ForegroundColor Cyan
     Write-Host "         Cassetta degli Attrezzi          " -ForegroundColor Cyan
     Write-Host "============================================" -ForegroundColor Cyan
     Write-Host ""
@@ -25,8 +25,10 @@ function Show-Menu {
     Write-Host "5. Pulizia Completa Sistema" -ForegroundColor Green
     Write-Host "6. Ottimizzazione Rete" -ForegroundColor Green
     Write-Host "7. Chocolatey Package Manager" -ForegroundColor Green
-    Write-Host "8. Info Sistema" -ForegroundColor Green
-    Write-Host "9. Esegui Tutto (Sequenza Completa)" -ForegroundColor Yellow
+    Write-Host "8. Microsoft Malware Removal Tool (MRT)" -ForegroundColor Green
+    Write-Host "9. Memory Test (MemTest86)" -ForegroundColor Green
+    Write-Host "10. Info Sistema Compatto" -ForegroundColor Green
+    Write-Host "11. Esegui Tutto (Sequenza Completa)" -ForegroundColor Yellow
     Write-Host ""
     Write-Host "0. Esci" -ForegroundColor Red
     Write-Host ""
@@ -259,16 +261,133 @@ function Manage-Chocolatey {
         
     } while ($chocoChoice -ne "0")
 }
-    Write-Host "=== INFORMAZIONI SISTEMA ===" -ForegroundColor Yellow
+
+function Invoke-MRT {
+    Write-Host "=== MICROSOFT MALWARE REMOVAL TOOL ===" -ForegroundColor Yellow
+    Write-Host "Avvio Microsoft Malware Removal Tool..." -ForegroundColor Green
     
-    Write-Host "Sistema Operativo:" -ForegroundColor Green
-    Get-ComputerInfo | Select-Object WindowsProductName, WindowsVersion, WindowsBuildLabEx
+    try {
+        # Verifica se MRT è presente nel sistema
+        $mrtPath = "$env:SystemRoot\System32\mrt.exe"
+        if (Test-Path $mrtPath) {
+            Write-Host "Avvio MRT in modalità completa..." -ForegroundColor Green
+            Start-Process -FilePath $mrtPath -ArgumentList "/f" -Wait
+            Write-Host "Scansione MRT completata." -ForegroundColor Green
+        }
+        else {
+            Write-Host "MRT non trovato nel sistema." -ForegroundColor Red
+            Write-Host "Prova a scaricare l'ultima versione dal sito Microsoft." -ForegroundColor Yellow
+        }
+    }
+    catch {
+        Write-Host "Errore durante l'esecuzione di MRT: $($_.Exception.Message)" -ForegroundColor Red
+    }
     
-    Write-Host "`nHardware:" -ForegroundColor Green
-    Get-ComputerInfo | Select-Object TotalPhysicalMemory, CsProcessors
+    Read-Host "Premi INVIO per continuare"
+}
+
+function Invoke-MemTest {
+    Write-Host "=== MEMORY TEST (MEMTEST86) ===" -ForegroundColor Yellow
+    Write-Host "Preparazione per Memory Test..." -ForegroundColor Green
     
-    Write-Host "`nSpazio Disco:" -ForegroundColor Green
-    Get-WmiObject -Class Win32_LogicalDisk | Where-Object {$_.DriveType -eq 3} | Select-Object DeviceID, @{Name="Size(GB)";Expression={[math]::Round($_.Size/1GB,2)}}, @{Name="FreeSpace(GB)";Expression={[math]::Round($_.FreeSpace/1GB,2)}}
+    Write-Host "OPZIONI MEMORY TEST:" -ForegroundColor Cyan
+    Write-Host "1. Windows Memory Diagnostic (integrato)" -ForegroundColor Green
+    Write-Host "2. Scarica MemTest86 (più completo)" -ForegroundColor Green
+    Write-Host "3. Annulla" -ForegroundColor Red
+    
+    $memChoice = Read-Host "Seleziona opzione"
+    
+    switch ($memChoice) {
+        "1" {
+            Write-Host "Avvio Windows Memory Diagnostic..." -ForegroundColor Green
+            Write-Host "Il sistema si riavvierà per eseguire il test." -ForegroundColor Yellow
+            Write-Host "I risultati saranno disponibili nel log eventi dopo il riavvio." -ForegroundColor Yellow
+            $confirm = Read-Host "Continuare? (S/N)"
+            if ($confirm -eq "S" -or $confirm -eq "s") {
+                mdsched.exe
+            }
+        }
+        "2" {
+            Write-Host "Apertura pagina download MemTest86..." -ForegroundColor Green
+            Start-Process "https://www.memtest86.com/download.htm"
+            Write-Host "Scarica MemTest86 e crealo su una USB avviabile." -ForegroundColor Yellow
+        }
+        "3" {
+            Write-Host "Operazione annullata." -ForegroundColor Yellow
+        }
+    }
+    
+    Read-Host "Premi INVIO per continuare"
+}
+
+function Show-CompactSystemInfo {
+    Write-Host "=== INFORMAZIONI SISTEMA COMPATTO ===" -ForegroundColor Yellow
+    
+    # Informazioni di base
+    $computerInfo = Get-ComputerInfo
+    $os = Get-CimInstance -ClassName Win32_OperatingSystem
+    $cpu = Get-CimInstance -ClassName Win32_Processor
+    $memory = Get-CimInstance -ClassName Win32_PhysicalMemory
+    $disks = Get-CimInstance -ClassName Win32_LogicalDisk | Where-Object {$_.DriveType -eq 3}
+    $gpu = Get-CimInstance -ClassName Win32_VideoController | Where-Object {$_.Name -notlike "*Basic*"}
+    
+    # Sistema Operativo
+    Write-Host "SISTEMA OPERATIVO:" -ForegroundColor Green
+    Write-Host "  OS: $($os.Caption) ($($os.Version))" -ForegroundColor White
+    Write-Host "  Build: $($os.BuildNumber)" -ForegroundColor White
+    Write-Host "  Architettura: $($os.OSArchitecture)" -ForegroundColor White
+    Write-Host "  Installato: $($os.InstallDate.ToString('dd/MM/yyyy'))" -ForegroundColor White
+    
+    # Hardware
+    Write-Host "`nHARDWARE:" -ForegroundColor Green
+    Write-Host "  CPU: $($cpu.Name.Trim())" -ForegroundColor White
+    Write-Host "  Core: $($cpu.NumberOfCores) fisici, $($cpu.NumberOfLogicalProcessors) logici" -ForegroundColor White
+    Write-Host "  Frequenza: $([math]::Round($cpu.MaxClockSpeed/1000, 2)) GHz" -ForegroundColor White
+    
+    # Memoria
+    $totalMemoryGB = [math]::Round(($memory | Measure-Object -Property Capacity -Sum).Sum / 1GB, 2)
+    $availableMemoryGB = [math]::Round($os.FreePhysicalMemory / 1MB, 2)
+    $usedMemoryGB = [math]::Round($totalMemoryGB - $availableMemoryGB, 2)
+    
+    Write-Host "  RAM Totale: $totalMemoryGB GB" -ForegroundColor White
+    Write-Host "  RAM Usata: $usedMemoryGB GB" -ForegroundColor White
+    Write-Host "  RAM Libera: $availableMemoryGB GB" -ForegroundColor White
+    
+    # GPU
+    Write-Host "`nSCHEDA GRAFICA:" -ForegroundColor Green
+    foreach ($card in $gpu) {
+        if ($card.Name -and $card.Name -notlike "*Basic*") {
+            Write-Host "  GPU: $($card.Name)" -ForegroundColor White
+            if ($card.AdapterRAM -and $card.AdapterRAM -gt 0) {
+                $vramGB = [math]::Round($card.AdapterRAM / 1GB, 2)
+                Write-Host "  VRAM: $vramGB GB" -ForegroundColor White
+            }
+        }
+    }
+    
+    # Storage
+    Write-Host "`nSTORAGE:" -ForegroundColor Green
+    foreach ($disk in $disks) {
+        $sizeGB = [math]::Round($disk.Size / 1GB, 2)
+        $freeGB = [math]::Round($disk.FreeSpace / 1GB, 2)
+        $usedGB = [math]::Round($sizeGB - $freeGB, 2)
+        $usedPercent = [math]::Round(($usedGB / $sizeGB) * 100, 1)
+        
+        Write-Host "  Drive $($disk.DeviceID) $sizeGB GB (Libero: $freeGB GB, Usato: $usedPercent%)" -ForegroundColor White
+    }
+    
+    # Uptime
+    $uptime = (Get-Date) - $os.LastBootUpTime
+    Write-Host "`nUPTIME:" -ForegroundColor Green
+    Write-Host "  Sistema avviato da: $($uptime.Days) giorni, $($uptime.Hours) ore, $($uptime.Minutes) minuti" -ForegroundColor White
+    
+    # Rete
+    $networkAdapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and $_.Virtual -eq $false}
+    Write-Host "`nRETE:" -ForegroundColor Green
+    foreach ($adapter in $networkAdapters) {
+        $speed = if ($adapter.LinkSpeed) { "$([math]::Round($adapter.LinkSpeed / 1MB, 0)) Mbps" } else { "N/A" }
+        Write-Host "  $($adapter.InterfaceDescription): $speed" -ForegroundColor White
+    }
     
     Read-Host "Premi INVIO per continuare"
 }
@@ -286,6 +405,7 @@ function Invoke-FullSequence {
         Invoke-SystemCleanup
         Invoke-FullCleanup
         Optimize-Network
+        Invoke-MRT
         Write-Host "Sequenza completa terminata!" -ForegroundColor Green
         Write-Host "Riavvio del sistema consigliato." -ForegroundColor Yellow
     }
@@ -305,8 +425,10 @@ do {
         "5" { Invoke-FullCleanup }
         "6" { Optimize-Network }
         "7" { Manage-Chocolatey }
-        "8" { Show-SystemInfo }
-        "9" { Invoke-FullSequence }
+        "8" { Invoke-MRT }
+        "9" { Invoke-MemTest }
+        "10" { Show-CompactSystemInfo }
+        "11" { Invoke-FullSequence }
         "0" { 
             Write-Host "Uscita dal toolkit..." -ForegroundColor Yellow
             exit 
