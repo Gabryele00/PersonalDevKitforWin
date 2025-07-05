@@ -344,26 +344,28 @@ function Show-CompactSystemInfo {
     Write-Host "  Core: $($cpu.NumberOfCores) fisici, $($cpu.NumberOfLogicalProcessors) logici" -ForegroundColor White
     Write-Host "  Frequenza: $([math]::Round($cpu.MaxClockSpeed/1000, 2)) GHz" -ForegroundColor White
     
-    # Memoria
+    # Memoria - CORREZIONE APPLICATA
     $totalMemoryGB = [math]::Round(($memory | Measure-Object -Property Capacity -Sum).Sum / 1GB, 2)
-    $availableMemoryGB = [math]::Round($os.FreePhysicalMemory / 1MB, 2)
+    $availableMemoryGB = [math]::Round($os.FreePhysicalMemory / 1KB / 1GB, 2)
     $usedMemoryGB = [math]::Round($totalMemoryGB - $availableMemoryGB, 2)
     
     Write-Host "  RAM Totale: $totalMemoryGB GB" -ForegroundColor White
     Write-Host "  RAM Usata: $usedMemoryGB GB" -ForegroundColor White
     Write-Host "  RAM Libera: $availableMemoryGB GB" -ForegroundColor White
     
-    # GPU
+    # GPU - CORREZIONE APPLICATA
     Write-Host "`nSCHEDA GRAFICA:" -ForegroundColor Green
     foreach ($card in $gpu) {
         if ($card.Name -and $card.Name -notlike "*Basic*") {
             Write-Host "  GPU: $($card.Name)" -ForegroundColor White
             if ($card.AdapterRAM -and $card.AdapterRAM -gt 0) {
-    $vramGB = [math]::Round($card.AdapterRAM / 1GB, 2)
-     Write-Host "  VRAM: $vramGB GB" -ForegroundColor White
-    } else {
-     Write-Host "  VRAM: Non disponibile" -ForegroundColor Gray
-     }
+                $vramGB = [math]::Round($card.AdapterRAM / 1GB, 2)
+                Write-Host "  VRAM: $vramGB GB" -ForegroundColor White
+            } else {
+                Write-Host "  VRAM: Non disponibile" -ForegroundColor Gray
+            }
+        }
+    }
     
     # Storage
     Write-Host "`nSTORAGE:" -ForegroundColor Green
@@ -381,11 +383,11 @@ function Show-CompactSystemInfo {
     Write-Host "`nUPTIME:" -ForegroundColor Green
     Write-Host "  Sistema avviato da: $($uptime.Days) giorni, $($uptime.Hours) ore, $($uptime.Minutes) minuti" -ForegroundColor White
     
-    # Rete
+    # Rete - CORREZIONE APPLICATA
     $networkAdapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and $_.Virtual -eq $false}
     Write-Host "`nRETE:" -ForegroundColor Green
     foreach ($adapter in $networkAdapters) {
-       $speed = if ($adapter.LinkSpeed) { "$([math]::Round($adapter.LinkSpeed / 1000000, 0)) Mbps" } else { "N/A" }
+        $speed = if ($adapter.LinkSpeed) { "$([math]::Round($adapter.LinkSpeed / 1000000, 0)) Mbps" } else { "N/A" }
         Write-Host "  $($adapter.InterfaceDescription): $speed" -ForegroundColor White
     }
     
