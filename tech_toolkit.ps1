@@ -359,11 +359,11 @@ function Show-CompactSystemInfo {
         if ($card.Name -and $card.Name -notlike "*Basic*") {
             Write-Host "  GPU: $($card.Name)" -ForegroundColor White
             if ($card.AdapterRAM -and $card.AdapterRAM -gt 0) {
-                $vramGB = [math]::Round($card.AdapterRAM / 1GB, 2)
-                Write-Host "  VRAM: $vramGB GB" -ForegroundColor White
-            }
-        }
-    }
+    $vramGB = [math]::Round($card.AdapterRAM / 1GB, 2)
+     Write-Host "  VRAM: $vramGB GB" -ForegroundColor White
+    } else {
+     Write-Host "  VRAM: Non disponibile" -ForegroundColor Gray
+     }
     
     # Storage
     Write-Host "`nSTORAGE:" -ForegroundColor Green
@@ -385,7 +385,7 @@ function Show-CompactSystemInfo {
     $networkAdapters = Get-NetAdapter | Where-Object {$_.Status -eq "Up" -and $_.Virtual -eq $false}
     Write-Host "`nRETE:" -ForegroundColor Green
     foreach ($adapter in $networkAdapters) {
-        $speed = if ($adapter.LinkSpeed) { "$([math]::Round($adapter.LinkSpeed / 1MB, 0)) Mbps" } else { "N/A" }
+       $speed = if ($adapter.LinkSpeed) { "$([math]::Round($adapter.LinkSpeed / 1000000, 0)) Mbps" } else { "N/A" }
         Write-Host "  $($adapter.InterfaceDescription): $speed" -ForegroundColor White
     }
     
